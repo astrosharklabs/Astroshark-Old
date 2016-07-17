@@ -1,19 +1,19 @@
 /*Sean Kee*/
-/*Astroshark v0.4.2*/
+/*Astroshark v0.4.3*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include "SDL.h"
+#include "SDL_image.h"
 
 #define PI 3.14159265
 
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.4.2"};
+char windowTitle[18] = {"Astroshark  v0.4.3"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -228,6 +228,9 @@ int initializeAstroshark(int *debug) {
 		*debug = 1;
 		return 1;
 	}
+
+	IMG_Init(IMG_INIT_PNG);
+
 	/*Declares the gameWindow(pointer) with datatype SDL_Window*/
 	SDL_Window *gameWindow;
 	gameWindow = SDL_CreateWindow(windowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0); 
@@ -318,7 +321,7 @@ int initializeAstroshark(int *debug) {
 	SDL_Point laser_origin = {8, 26};
 	int laserTotal = 20;
 	SDL_Texture *laserTexture;
-	laserInstance laser[laserTotal];
+	laserInstance laser[20];
 	for (i = 0; i < laserTotal; i++) {
 		createLaser(&gameWindow, &renderer, &laser[i].laser_dstrect.w, &laser[i].laser_dstrect.h, &laserTexture);
 		laser[i].laser_dstrect.w -= 320;
@@ -352,7 +355,7 @@ int initializeAstroshark(int *debug) {
 //	int asteroidDouble = 4;
 //	int asteroidGold = 1;
 	SDL_Texture *asteroidTexture;
-	asteroidInstance asteroid[asteroidDefault];
+	asteroidInstance asteroid[20];
 	for (i = 0; i < asteroidDefault; i++) {
 		createAsteroid(&gameWindow, &renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture);
 		asteroid[i].asteroid_dstrect.w -= 640;
@@ -791,6 +794,9 @@ int initializeAstroshark(int *debug) {
 	SDL_DestroyRenderer(renderer);
 	/*Destroys the window that gameWindow is pointing to*/
 	SDL_DestroyWindow(gameWindow);
+
+	IMG_Quit();
+
 	/*Cleans up and quits out of SDL*/
 	SDL_Quit();
 
