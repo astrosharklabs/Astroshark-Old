@@ -1,2 +1,2 @@
 # Astroshark
-Sharks... Asteroids... Astroshark!!
+Shoot asteroids...
