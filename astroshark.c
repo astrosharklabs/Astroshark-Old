@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.4.3*/
+/*Astroshark v0.5.0*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,12 +13,36 @@
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.4.3"};
+char windowTitle[18] = {"Astroshark  v0.5.0"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
+enum shipAnimation {AT_REST, ENGINE_START, ENGINE_1, ENGINE_2, ENGINE_3, ENGINE_4};
+/*Strut for a ship*/
+typedef struct shipCharacter{
+	SDL_Rect dstrect;
+	SDL_Rect srcrect;
+	SDL_Texture *texture;
+	int speed;
+	/*Variables for event tests*/
+	int moveForward;
+	int moveBackward;
+	int strafeLeft;
+	int strafeRight;
+	int rotateLeft;
+	int rotateRight;
+	int actionShoot;
+	/*Movement variables*/
+	int rotate;
+	int deltaX;
+	int deltaY;
+	/*Ship variables*/
+	int lives;
+	int animationFrame;
+} shipInstance;
+
 /*Struct for an asteroid*/
-typedef struct {
+typedef struct asteroidCharacter{
 	int rotate;
 	int deltaX;
 	int deltaY;
@@ -31,7 +55,7 @@ typedef struct {
 	SDL_Rect hitBox;
 } asteroidInstance;
 /*Struct for a laser*/
-typedef struct {	
+typedef struct laserObject{	
 	int laser_rotate;
 	int deltaX;
 	int deltaY;
@@ -281,41 +305,45 @@ int initializeAstroshark(int *debug) {
 /*Creates Source rectangle, to highlight the area in which the correct sprite on the spritesheet is located*/
 /*Creates the Ship's texture*/
 /*Sends the addresses the necessary structs and data to createShip()*/
-	SDL_Rect playerShip_dstrect;
-	SDL_Rect playerShip_srcrect = {0, 0, 320, 480};
-	SDL_Texture *playerShipTexture;
-	createShip(&gameWindow, &renderer, &playerShip_dstrect.w, &playerShip_dstrect.h, &playerShipTexture);
+	shipInstance playerShip;
+	createShip(&gameWindow, &renderer, &playerShip.dstrect.w, &playerShip.dstrect.h, &playerShip.texture);
 /*Resizes the width of the rectangle to the size of a single sprite*/
 	/*Scales down the ship*/
-	playerShip_dstrect.w -= 1600;
-	playerShip_dstrect.w /= 10;
-	playerShip_dstrect.h /= 10;
+	playerShip.dstrect.w -= 1600;
+	playerShip.dstrect.w /= 10;
+	playerShip.dstrect.h /= 10;
 
-	playerShip_dstrect.x = WINDOW_WIDTH / 2;	
-	playerShip_dstrect.y = WINDOW_HEIGHT / 2;
+	playerShip.dstrect.x = WINDOW_WIDTH / 2;	
+	playerShip.dstrect.y = WINDOW_HEIGHT / 2;
+
+	/*Sets the proper texture location*/
+	playerShip.srcrect.x = 0;
+	playerShip.srcrect.y = 0;
+	playerShip.srcrect.w = 320;
+	playerShip.srcrect.h = 480;
+
 /*Default ship speed*/
-	int playerShip_speed = 5;
+	playerShip.speed = 5;
 
 /*Various booleans for different movements*/
-	int playerShip_moveForward = 0;
-	int playerShip_moveLeftStrafe = 0;
-	int playerShip_moveBackward = 0;
-	int playerShip_moveRightStrafe = 0;
+	playerShip.moveForward = 0;
+	playerShip.strafeLeft = 0;
+	playerShip.moveBackward = 0;
+	playerShip.strafeRight = 0;
+	
+	playerShip.rotateLeft = 0;
+	playerShip.rotateRight = 0;
 
-	int playerShip_rotateLeft = 0;
-	int playerShip_rotateRight = 0;
-
-	int playerShip_actionShoot = 0;
+	playerShip.actionShoot = 0;
 /*Variable for ship rotation angle*/
-	int playerShip_rotate = 0;
+	playerShip.rotate = 0;
 
-	int playerShip_deltaX = 0;
-	int playerShip_deltaY = 0;
+	playerShip.deltaX = 0;
+	playerShip.deltaY = 0;
 
-	int playerLives = 3;
+	playerShip.lives = 3;
 
-	enum playerShip_animation {AT_REST, ENGINE_START, ENGINE_1, ENGINE_2, ENGINE_3, ENGINE_4};
-	int playerShip_animationFrame = AT_REST;
+	playerShip.animationFrame = AT_REST;
 
 /*Creates variables for laser beam*/
 	SDL_Point laser_origin = {8, 26};
@@ -551,50 +579,50 @@ int initializeAstroshark(int *debug) {
 				case SDL_KEYDOWN:
 					switch(event.key.keysym.scancode) {
 						case SDL_SCANCODE_W:
-							playerShip_moveForward = 1;
+							playerShip.moveForward = 1;
 							break;
 						case SDL_SCANCODE_A:
-							playerShip_moveLeftStrafe = 1;
+							playerShip.strafeLeft = 1;
 							break;
 						case SDL_SCANCODE_S:
-							playerShip_moveBackward = 1;
+							playerShip.moveBackward = 1;
 							break;
 						case SDL_SCANCODE_D:
-							playerShip_moveRightStrafe = 1;
+							playerShip.strafeRight = 1;
 							break;
 						case SDL_SCANCODE_SPACE:
-							playerShip_actionShoot = 1;
+							playerShip.actionShoot = 1;
 							break;
 						case SDL_SCANCODE_LEFT:
-							playerShip_rotateLeft = 1;
+							playerShip.rotateLeft = 1;
 							break;
 						case SDL_SCANCODE_RIGHT:
-							playerShip_rotateRight = 1;
+							playerShip.rotateRight = 1;
 							break;
 					}
 					break;
 				case SDL_KEYUP:
 					switch(event.key.keysym.scancode) {
 						case SDL_SCANCODE_W:
-							playerShip_moveForward = 0;
+							playerShip.moveForward = 0;
 							break;
 						case SDL_SCANCODE_A:
-							playerShip_moveLeftStrafe = 0;
+							playerShip.strafeLeft = 0;
 							break;
 						case SDL_SCANCODE_S:
-							playerShip_moveBackward = 0;
+							playerShip.moveBackward = 0;
 							break;
 						case SDL_SCANCODE_D:
-							playerShip_moveRightStrafe = 0;
+							playerShip.strafeRight = 0;
 							break;
 						case SDL_SCANCODE_SPACE:
-							playerShip_actionShoot = 0;
+							playerShip.actionShoot = 0;
 							break;
 						case SDL_SCANCODE_LEFT:
-							playerShip_rotateLeft = 0;
+							playerShip.rotateLeft = 0;
 							break;
 						case SDL_SCANCODE_RIGHT:
-							playerShip_rotateRight = 0;
+							playerShip.rotateRight = 0;
 							break;
 					}
 					break;
@@ -603,7 +631,7 @@ int initializeAstroshark(int *debug) {
 		}
 
 		/*Test for end of game*/
-		if (playerLives == 0) {
+		if (playerShip.lives == 0) {
 			SDL_RenderClear(renderer);
 			SDL_RenderCopy(renderer, endTexture, NULL, &endRect);
 			SDL_RenderPresent(renderer);
@@ -612,51 +640,51 @@ int initializeAstroshark(int *debug) {
 
 		
 /*Copies ship's position into deltaX and deltaY*/
-		playerShip_deltaX = playerShip_dstrect.x;																	
-		playerShip_deltaY = playerShip_dstrect.y;
+		playerShip.deltaX = playerShip.dstrect.x;																	
+		playerShip.deltaY = playerShip.dstrect.y;
 
 /*Checks for ship rotation based on arrow keys*/
-		if (playerShip_rotateLeft == 1)																				
-			playerShip_rotate -= 9;
-		if (playerShip_rotateRight == 1)
-			playerShip_rotate += 9;
-		if (playerShip_rotate >= 360)
-			playerShip_rotate -= 360;
-		if (playerShip_rotate < 0)
-			playerShip_rotate +=360;
+		if (playerShip.rotateLeft == 1)																				
+			playerShip.rotate -= 9;
+		if (playerShip.rotateRight == 1)
+			playerShip.rotate += 9;
+		if (playerShip.rotate >= 360)
+			playerShip.rotate -= 360;
+		if (playerShip.rotate < 0)
+			playerShip.rotate +=360;
 
 		
 /*Tests for different key presses*/
-		if (playerShip_moveForward == 1) {																			
-			calculateMovement(&playerShip_deltaX, &playerShip_deltaY, playerShip_rotate, playerShip_speed, &deltaX, &deltaY);
-			playerShip_dstrect.x = playerShip_deltaX;
-			playerShip_dstrect.y = playerShip_deltaY;
-			playerShip_animationFrame++;
+		if (playerShip.moveForward == 1) {																			
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, playerShip.speed, &deltaX, &deltaY);
+			playerShip.dstrect.x = playerShip.deltaX;
+			playerShip.dstrect.y = playerShip.deltaY;
+			playerShip.animationFrame++;
 			
 		}
-		if (playerShip_moveBackward == 1) {
-			calculateMovement(&playerShip_deltaX, &playerShip_deltaY, playerShip_rotate, -1 * playerShip_speed + 3, &deltaX, &deltaY);
-			playerShip_dstrect.x = playerShip_deltaX;
-			playerShip_dstrect.y = playerShip_deltaY;
+		if (playerShip.moveBackward == 1) {
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, -1 * playerShip.speed + 3, &deltaX, &deltaY);
+			playerShip.dstrect.x = playerShip.deltaX;
+			playerShip.dstrect.y = playerShip.deltaY;
 		}
-		if (playerShip_moveLeftStrafe == 1) {
-			calculateMovement(&playerShip_deltaX, &playerShip_deltaY, playerShip_rotate - 90, playerShip_speed - 3, &deltaX, &deltaY);
-			playerShip_dstrect.x = playerShip_deltaX;
-			playerShip_dstrect.y = playerShip_deltaY;
+		if (playerShip.strafeLeft == 1) {
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate - 90, playerShip.speed - 3, &deltaX, &deltaY);
+			playerShip.dstrect.x = playerShip.deltaX;
+			playerShip.dstrect.y = playerShip.deltaY;
 		}
-		if (playerShip_moveRightStrafe == 1) {
-			calculateMovement(&playerShip_deltaX, &playerShip_deltaY, playerShip_rotate + 90, playerShip_speed - 3, &deltaX, &deltaY);
-			playerShip_dstrect.x = playerShip_deltaX;
-			playerShip_dstrect.y = playerShip_deltaY;
+		if (playerShip.strafeRight == 1) {
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate + 90, playerShip.speed - 3, &deltaX, &deltaY);
+			playerShip.dstrect.x = playerShip.deltaX;
+			playerShip.dstrect.y = playerShip.deltaY;
 		}
 
-		if (playerShip_actionShoot == 1) {
+		if (playerShip.actionShoot == 1) {
 			if (laserCount < laserTotal) {
 				if (laserDelay == 0) {
-					calculateMovement(NULL, NULL, playerShip_rotate, 10, &laser[laserCount].deltaX, &laser[laserCount].deltaY);
-					laser[laserCount].laser_dstrect.x = playerShip_dstrect.x + 8;
-					laser[laserCount].laser_dstrect.y = playerShip_dstrect.y - 2;
-					laser[laserCount].laser_rotate = playerShip_rotate;
+					calculateMovement(NULL, NULL, playerShip.rotate, 10, &laser[laserCount].deltaX, &laser[laserCount].deltaY);
+					laser[laserCount].laser_dstrect.x = playerShip.dstrect.x + 8;
+					laser[laserCount].laser_dstrect.y = playerShip.dstrect.y - 2;
+					laser[laserCount].laser_rotate = playerShip.rotate;
 					
 					laserCount++;
 					laserDelay++;
@@ -665,27 +693,27 @@ int initializeAstroshark(int *debug) {
 		}
 
  		/*Collision Detection between the ship and the walls*/
-		if (playerShip_dstrect.x <= 0)
-			playerShip_dstrect.x = 0;
-		if (playerShip_dstrect.x >= WINDOW_WIDTH - playerShip_dstrect.w)
-			playerShip_dstrect.x = WINDOW_WIDTH - playerShip_dstrect.w ;
-		if (playerShip_dstrect.y <= -6)
-			playerShip_dstrect.y = -6;
-		if (playerShip_dstrect.y >= WINDOW_HEIGHT - playerShip_dstrect.h + 6)
-			playerShip_dstrect.y = WINDOW_HEIGHT - playerShip_dstrect.h + 6;
+		if (playerShip.dstrect.x <= 0)
+			playerShip.dstrect.x = 0;
+		if (playerShip.dstrect.x >= WINDOW_WIDTH - playerShip.dstrect.w)
+			playerShip.dstrect.x = WINDOW_WIDTH - playerShip.dstrect.w ;
+		if (playerShip.dstrect.y <= -6)
+			playerShip.dstrect.y = -6;
+		if (playerShip.dstrect.y >= WINDOW_HEIGHT - playerShip.dstrect.h + 6)
+			playerShip.dstrect.y = WINDOW_HEIGHT - playerShip.dstrect.h + 6;
 
 		/*Proper Animation for the Ship*/
-		if (playerShip_moveForward == 0) {
-			if (playerShip_animationFrame <= AT_REST)
-				playerShip_animationFrame = AT_REST;
+		if (playerShip.moveForward == 0) {
+			if (playerShip.animationFrame <= AT_REST)
+				playerShip.animationFrame = AT_REST;
 			else
-				playerShip_animationFrame--;
+				playerShip.animationFrame--;
 		}
 
-		if (playerShip_animationFrame > ENGINE_4)
-			playerShip_animationFrame = ENGINE_1;
+		if (playerShip.animationFrame > ENGINE_4)
+			playerShip.animationFrame = ENGINE_1;
 
-		playerShip_srcrect.x = 320 * (playerShip_animationFrame);
+		playerShip.srcrect.x = 320 * (playerShip.animationFrame);
 		/*Laser timer*/
 		if (laserDelay != 0)
 			laserDelay++;
@@ -740,11 +768,11 @@ int initializeAstroshark(int *debug) {
 					asteroid[i].health = 1;
 					playerScore++;
 				}
-			if ((playerShip_dstrect.y >= asteroid[i].asteroid_dstrect.y && playerShip_dstrect.y <= asteroid[i].asteroid_dstrect.y + asteroid[i].asteroid_dstrect.h) && (playerShip_dstrect.x <= asteroid[i].asteroid_dstrect.x + asteroid[i].asteroid_dstrect.w && playerShip_dstrect.x >= asteroid[i].asteroid_dstrect.x)) {
+			if ((playerShip.dstrect.y >= asteroid[i].asteroid_dstrect.y && playerShip.dstrect.y <= asteroid[i].asteroid_dstrect.y + asteroid[i].asteroid_dstrect.h) && (playerShip.dstrect.x <= asteroid[i].asteroid_dstrect.x + asteroid[i].asteroid_dstrect.w && playerShip.dstrect.x >= asteroid[i].asteroid_dstrect.x)) {
 				asteroid[i].asteroid_dstrect.y = -80;
-				playerShip_dstrect.x = WINDOW_WIDTH / 2;
-				playerShip_dstrect.y = WINDOW_HEIGHT / 2;
-				playerLives--;
+				playerShip.dstrect.x = WINDOW_WIDTH / 2;
+				playerShip.dstrect.y = WINDOW_HEIGHT / 2;
+				playerShip.lives--;
 			}
 		}
 
@@ -778,14 +806,14 @@ int initializeAstroshark(int *debug) {
 
 		}/*Copies the texture onto the rect, and rotates it correctly*/
 			/*Presents the renderer and draws everything in renderer*/
-		SDL_RenderCopyEx(renderer, playerShipTexture, &playerShip_srcrect, &playerShip_dstrect, playerShip_rotate, NULL, SDL_FLIP_NONE);
+		SDL_RenderCopyEx(renderer, playerShip.texture, &playerShip.srcrect, &playerShip.dstrect, playerShip.rotate, NULL, SDL_FLIP_NONE);
 		SDL_RenderPresent(renderer);
 
 		SDL_Delay(1000/60);
 	}
 
 	/*Destroys Texture to ensure no memory leaks*/
-	SDL_DestroyTexture(playerShipTexture);
+	SDL_DestroyTexture(playerShip.texture);
 	SDL_DestroyTexture(laserTexture);
 	SDL_DestroyTexture(asteroidTexture);
 	SDL_DestroyTexture(titleTexture);
