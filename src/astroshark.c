@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.5.0*/
+/*Astroshark v0.5.3*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +14,7 @@
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.5.0"};
+char windowTitle[18] = {"Astroshark  v0.5.3"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -25,7 +25,8 @@ typedef struct shipCharacter{
 	SDL_Rect srcrect;
 	SDL_Texture *texture;
 	Mix_Chunk *shootSFX;
-	int speed;
+	/*Constants*/
+	int defaultOrientation;
 	/*Variables for event tests*/
 	int moveForward;
 	int moveBackward;
@@ -35,6 +36,7 @@ typedef struct shipCharacter{
 	int rotateRight;
 	int actionShoot;
 	/*Movement variables*/
+	int speed;
 	int rotate;
 	int deltaX;
 	int deltaY;
@@ -93,10 +95,10 @@ void calculate_asteroidMovement(int *rotate, int *deltaX, int *deltaY, int spawn
 /*Function to calculate movement using my algorithm*/
 /*This Algorithm calculates the direction that the player should move if the W(forwards) key is pressed by using the angle and speed*/
 /*This algorithm involves trigonometry to calculate (using unit circle)*/
-void calculateMovement(int *new_posX, int *new_posY, int angle, int speed, int *new_deltaX, int *new_deltaY) {
+void calculateMovement(int *deltaX, int *deltaY, int angle, int speed) {
 	int quadrant = 0;
-	float deltaX;
-	float deltaY;
+	float sinT;
+	float cosT;
 /*Checks to see if rotation is greater or less than 0/360*/
 	if (angle >= 360)
 		angle -= 360;
@@ -108,7 +110,7 @@ void calculateMovement(int *new_posX, int *new_posY, int angle, int speed, int *
 		quadrant = 1;
 	}
 	if (angle < 180 && angle > 90) {
-		quadrant = 4;
+		quadrant = 2;
 		angle -= 90;
 	}
 	if (angle < 270 && angle > 180) {
@@ -116,90 +118,57 @@ void calculateMovement(int *new_posX, int *new_posY, int angle, int speed, int *
 		angle -= 180;
 	}
 	if (angle <= 359 && angle > 270) {
-		quadrant = 2;
+		quadrant = 4;
 		angle -= 270;
 	}
 /*Sets direction if player is orientated towards an axis*/
 	if (angle == 0)
-		quadrant = NORTH;
-	if (angle == 90)
 		quadrant = EAST;
+	if (angle == 90)
+		quadrant = NORTH;
 	if (angle == 180)
-		quadrant = SOUTH;
-	if (angle == 270)
 		quadrant = WEST;
+	if (angle == 270)
+		quadrant = SOUTH;
 /*Calculates the change in x and y using trigonometric functions*/
-	deltaX = sin(angle*PI/180) * speed;
-	deltaY = cos(angle*PI/180) * speed;
+	sinT = sin(angle*PI/180) * speed;
+	cosT= cos(angle*PI/180) * speed;
 //	printf("deltaX = %f\ndeltaY = %f\nangle = %d\n", deltaX, deltaY, angle);
 
 /*Updates the changes based on correct orientation and deltaX and deltaY*/
-	if (new_deltaX != NULL && new_deltaY != NULL) {
+	if (deltaX != NULL && deltaY != NULL) {
 		switch(quadrant) {
 			case 1:
-				*new_deltaX = deltaX;
-				*new_deltaY = -1 * deltaY;
+				*deltaX = cosT;
+				*deltaY = -1 * sinT;
 				break;
 			case 2:
-				*new_deltaX = -1 * deltaY;
-				*new_deltaY = -1 * deltaX;	
+				*deltaX = -1 * sinT;
+				*deltaY = -1 * cosT;	
 				break;
 			case 3:
-				*new_deltaX = -1 * deltaX;
-				*new_deltaY = deltaY;
+				*deltaX = -1 * cosT;
+				*deltaY = sinT;
 				break;
 			case 4:
-				*new_deltaX = deltaY;
-				*new_deltaY = deltaX;
+				*deltaX = sinT;
+				*deltaY = cosT;
 				break;
 			case NORTH:
-				*new_deltaX = 0;
-				*new_deltaY = -1 * speed;
+				*deltaX = 0;
+				*deltaY = -1 * speed;
 				break;
 			case EAST:
-				*new_deltaX = speed;
-				*new_deltaY = 0;
+				*deltaX = speed;
+				*deltaY = 0;
 				break;
 			case SOUTH:
-				*new_deltaX = 0;
-				*new_deltaY = speed;
+				*deltaX = 0;
+				*deltaY = speed;
 				break;
 			case WEST:
-				*new_deltaX = -1 * speed;
-				*new_deltaY = 0;
-				break;
-		}
-	}
-
-	if (new_posX != NULL && new_posY != NULL) {
-		switch(quadrant) {
-			case 1:
-				*new_posX += deltaX;
-				*new_posY -= deltaY;
-				break;
-			case 2:
-				*new_posX -= deltaY;
-				*new_posY -= deltaX;
-				break;
-			case 3:
-				*new_posX -= deltaX;
-				*new_posY += deltaY;
-				break;
-			case 4:
-				*new_posX += deltaY;
-				*new_posY += deltaX;
-				break;
-			case NORTH:
-				*new_posY -= speed;
-				break;
-			case EAST:
-				*new_posX += speed;
-				break;
-			case SOUTH:
-				*new_posY += speed;
-				break;
-			case WEST:
-				*new_posX -= speed;
+				*deltaX = -1 * speed;
+				*deltaY = 0;
 				break;
 		}
 	}
@@ -350,6 +319,12 @@ int initializeAstroshark(int *debug) {
 
 	playerShip.shootSFX = Mix_LoadWAV("resources/sfx/shoot.wav");
 
+	playerShip.defaultOrientation = NORTH;
+
+	if (playerShip.defaultOrientation == NORTH)
+		playerShip.defaultOrientation = 90;
+		playerShip.rotate = playerShip.defaultOrientation;
+
 /*Creates variables for laser beam*/
 	SDL_Point laser_origin = {8, 26};
 	int laserTotal = 20;
@@ -368,7 +343,7 @@ int initializeAstroshark(int *debug) {
 
 		laser[i].laser_dstrect.x = -20;
 		laser[i].laser_dstrect.y = 0;
-		laser[i].laser_rotate = 0;
+		laser[i].laser_rotate = playerShip.defaultOrientation;
 		
 		laser[i].deltaX = 0;
 		laser[i].deltaY = 0;
@@ -569,8 +544,6 @@ int initializeAstroshark(int *debug) {
 		printf("Laser %d W: %d H: %d\n", i, laser[i].laser_dstrect.w, laser[i].laser_dstrect.h);
 	}*/
 
-	int deltaX;
-	int deltaY;
 /*close requested variable for controlling closed window*/
 	/*Test for various events from the keyboard*/
 	int close_requested = 0;																						
@@ -650,43 +623,44 @@ int initializeAstroshark(int *debug) {
 
 /*Checks for ship rotation based on arrow keys*/
 		if (playerShip.rotateLeft == 1)																				
-			playerShip.rotate -= 9;
-		if (playerShip.rotateRight == 1)
 			playerShip.rotate += 9;
+		if (playerShip.rotateRight == 1)
+			playerShip.rotate -= 9;
 		if (playerShip.rotate >= 360)
 			playerShip.rotate -= 360;
 		if (playerShip.rotate < 0)
-			playerShip.rotate +=360;
+			playerShip.rotate += 360;
 
+//		printf("%d\n", playerShip.rotate);
 		
 /*Tests for different key presses*/
 		if (playerShip.moveForward == 1) {																			
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, playerShip.speed, &deltaX, &deltaY);
-			playerShip.dstrect.x = playerShip.deltaX;
-			playerShip.dstrect.y = playerShip.deltaY;
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, playerShip.speed);
+			playerShip.dstrect.x += playerShip.deltaX;
+			playerShip.dstrect.y += playerShip.deltaY;
 			playerShip.animationFrame++;
 			
 		}
 		if (playerShip.moveBackward == 1) {
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, -1 * playerShip.speed + 3, &deltaX, &deltaY);
-			playerShip.dstrect.x = playerShip.deltaX;
-			playerShip.dstrect.y = playerShip.deltaY;
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, -1 * playerShip.speed + 3);
+			playerShip.dstrect.x += playerShip.deltaX;
+			playerShip.dstrect.y += playerShip.deltaY;
 		}
 		if (playerShip.strafeLeft == 1) {
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate - 90, playerShip.speed - 3, &deltaX, &deltaY);
-			playerShip.dstrect.x = playerShip.deltaX;
-			playerShip.dstrect.y = playerShip.deltaY;
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate - 90, playerShip.speed - 3);
+			playerShip.dstrect.x += playerShip.deltaX;
+			playerShip.dstrect.y += playerShip.deltaY;
 		}
 		if (playerShip.strafeRight == 1) {
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate + 90, playerShip.speed - 3, &deltaX, &deltaY);
-			playerShip.dstrect.x = playerShip.deltaX;
-			playerShip.dstrect.y = playerShip.deltaY;
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate + 90, playerShip.speed - 3);
+			playerShip.dstrect.x += playerShip.deltaX;
+			playerShip.dstrect.y += playerShip.deltaY;
 		}
 
 		if (playerShip.actionShoot == 1) {
 			if (laserCount < laserTotal) {
 				if (laserDelay == 0) {
-					calculateMovement(NULL, NULL, playerShip.rotate, 10, &laser[laserCount].deltaX, &laser[laserCount].deltaY);
+					calculateMovement(&laser[laserCount].deltaX, &laser[laserCount].deltaY, playerShip.rotate, 10);
 					laser[laserCount].laser_dstrect.x = playerShip.dstrect.x + 8;
 					laser[laserCount].laser_dstrect.y = playerShip.dstrect.y - 2;
 					laser[laserCount].laser_rotate = playerShip.rotate;
@@ -808,12 +782,12 @@ int initializeAstroshark(int *debug) {
 			}
 			laser[i].laser_dstrect.x += laser[i].deltaX;
 			laser[i].laser_dstrect.y += laser[i].deltaY;
-			SDL_RenderCopyEx(renderer, laserTexture, &laser[i].laser_srcrect, &laser[i].laser_dstrect, laser[i].laser_rotate, &laser_origin, SDL_FLIP_NONE);
+			SDL_RenderCopyEx(renderer, laserTexture, &laser[i].laser_srcrect, &laser[i].laser_dstrect, -1 * (laser[i].laser_rotate - playerShip.defaultOrientation), &laser_origin, SDL_FLIP_NONE);
 //			printf("%d\tW:%d\tH:%d\n", i, laser[i].laser_dstrect.w, laser[i].laser_dstrect.h);
 
 		}/*Copies the texture onto the rect, and rotates it correctly*/
 			/*Presents the renderer and draws everything in renderer*/
-		SDL_RenderCopyEx(renderer, playerShip.texture, &playerShip.srcrect, &playerShip.dstrect, playerShip.rotate, NULL, SDL_FLIP_NONE);
+		SDL_RenderCopyEx(renderer, playerShip.texture, &playerShip.srcrect, &playerShip.dstrect, -1 * (playerShip.rotate - playerShip.defaultOrientation), NULL, SDL_FLIP_NONE);
 		SDL_RenderPresent(renderer);
 
 		SDL_Delay(1000/60);
