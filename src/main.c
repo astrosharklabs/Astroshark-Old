@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.5.3*/
+/*Astroshark v0.6.0*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,13 +8,15 @@
 #include "SDL.h"
 #include "SDL_image.h"
 #include "SDL_mixer.h"
+#include "asteroids.h"
+#include "lasers.h"
 
 #define PI 3.14159265
 
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.5.3"};
+char windowTitle[18] = {"Astroshark  v0.6.0"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -44,53 +46,6 @@ typedef struct shipCharacter{
 	int lives;
 	int animationFrame;
 } shipInstance;
-
-/*Struct for an asteroid*/
-typedef struct asteroidCharacter{
-	int rotate;
-	int deltaX;
-	int deltaY;
-	int type;
-	int size;
-	int health;
-	int spawnLocation;
-	SDL_Rect asteroid_dstrect;
-	SDL_Rect asteroid_srcrect;
-	SDL_Rect hitBox;
-} asteroidInstance;
-/*Struct for a laser*/
-typedef struct laserObject{	
-	int laser_rotate;
-	int deltaX;
-	int deltaY;
-	SDL_Rect laser_dstrect;
-	SDL_Rect laser_srcrect;
-} laserInstance;
-
-/*Calculates the movement of an asteroid*/
-void calculate_asteroidMovement(int *rotate, int *deltaX, int *deltaY, int spawnLocation) {
-	srand(time(NULL));
-	*deltaX = (rand() % 5) + 1;
-	*deltaY = (rand() % 5) + 1;
-	*rotate = (rand() % 20) + 1;
-	int r = rand() % 2;
-	if (r = 1)
-		*rotate *= -1;
-	if (spawnLocation == BOTTOM) {
-		*deltaY *= -1;
-		if (r == 1)
-			*deltaY *= -1;
-	}
-	if (spawnLocation == RIGHT){
-		*deltaX *= -1;
-		if (r == 0)
-			*deltaY *= -1;
-	}
-	if (spawnLocation == LEFT && r == 1)
-		*deltaY *= -1;
-	if (spawnLocation == TOP && r == 1)
-		*deltaX *= -1;
-}
 
 /*Function to calculate movement using my algorithm*/
 /*This Algorithm calculates the direction that the player should move if the W(forwards) key is pressed by using the angle and speed*/
@@ -247,17 +202,22 @@ int initializeAstroshark(int *debug) {
 	}
 
 	/*Creates Loading Screen*/
-	SDL_Texture *titleTexture;
-	SDL_Rect titleRect;
-	SDL_Surface *tempSurface = IMG_Load("resources/gfx/title.png");
-	titleTexture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+	SDL_Texture *splash_screenTexture;
+	SDL_Rect splash_screenRect;
+	SDL_Surface *tempSurface = IMG_Load("resources/gfx/splash_screen.png");
+	splash_screenTexture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 	SDL_FreeSurface(tempSurface);
-	SDL_QueryTexture(titleTexture, NULL, NULL, &titleRect.w, &titleRect.h);
-	titleRect.x = 0;
-	titleRect.y = 0;
+	SDL_QueryTexture(splash_screenTexture, NULL, NULL, &splash_screenRect.w, &splash_screenRect.h);
+	splash_screenRect.w *= 1;
+	splash_screenRect.h *= 1;
+	splash_screenRect.x = (WINDOW_WIDTH / 2) - (splash_screenRect.w / 2);
+	splash_screenRect.y = (WINDOW_HEIGHT / 2) - (splash_screenRect.h / 2);
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, titleTexture, NULL, &titleRect);
+	SDL_RenderCopy(renderer, splash_screenTexture, NULL, &splash_screenRect);
 	SDL_RenderPresent(renderer);
+
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
 	/*Creates End texture*/
 	SDL_Texture *endTexture;
@@ -331,23 +291,23 @@ int initializeAstroshark(int *debug) {
 	SDL_Texture *laserTexture;
 	laserInstance laser[20];
 	for (i = 0; i < laserTotal; i++) {
-		createLaser(&gameWindow, &renderer, &laser[i].laser_dstrect.w, &laser[i].laser_dstrect.h, &laserTexture);
-		laser[i].laser_dstrect.w -= 320;
-		laser[i].laser_dstrect.w /= 10;
-		laser[i].laser_dstrect.h /= 10;	
+		createLaser(&gameWindow, &renderer, &laser[i].dstrect.w, &laser[i].dstrect.h, &laserTexture);
+		laser[i].dstrect.w -= 320;
+		laser[i].dstrect.w /= 10;
+		laser[i].dstrect.h /= 10;	
 	
-		laser[i].laser_srcrect.x = 0;
-		laser[i].laser_srcrect.y = 0;
-		laser[i].laser_srcrect.w = 160;
-		laser[i].laser_srcrect.h = 320;
+		laser[i].srcrect.x = 0;
+		laser[i].srcrect.y = 0;
+		laser[i].srcrect.w = 160;
+		laser[i].srcrect.h = 320;
 
-		laser[i].laser_dstrect.x = -20;
-		laser[i].laser_dstrect.y = 0;
-		laser[i].laser_rotate = playerShip.defaultOrientation;
+		laser[i].dstrect.x = -20;
+		laser[i].dstrect.y = 0;
+		laser[i].rotate = playerShip.defaultOrientation;
 		
 		laser[i].deltaX = 0;
 		laser[i].deltaY = 0;
-//		printf("Laser %d Original W: %d H: %d\n", i, laser[i].laser_dstrect.w, laser[i].laser_dstrect.h);
+//		printf("Laser %d Original W: %d H: %d\n", i, laser[i].dstrect.w, laser[i].dstrect.h);
 	}
 	
 	int laserCount = 0;
@@ -442,7 +402,7 @@ int initializeAstroshark(int *debug) {
 
 /*THIS WHOLE SECITION IS CODE FOR ADD ONS THAT IS NOT CURRENTLY WORKING*/
 /*	for (i = 0; i < laserTotal; i++) {
-		printf("Laser %d W: %d H: %d\n", i, laser[i].laser_dstrect.w, laser[i].laser_dstrect.h);
+		printf("Laser %d W: %d H: %d\n", i, laser[i].dstrect.w, laser[i].dstrect.h);
 	}*/
 
 /*	for (i = (asteroidTotal - asteroidDouble); i < (asteroidTotal - asteroidGold); i++) {
@@ -541,7 +501,7 @@ int initializeAstroshark(int *debug) {
 	} */
 
 /*	for (i = 0; i < laserTotal; i++) {
-		printf("Laser %d W: %d H: %d\n", i, laser[i].laser_dstrect.w, laser[i].laser_dstrect.h);
+		printf("Laser %d W: %d H: %d\n", i, laser[i].dstrect.w, laser[i].dstrect.h);
 	}*/
 
 /*close requested variable for controlling closed window*/
@@ -661,9 +621,9 @@ int initializeAstroshark(int *debug) {
 			if (laserCount < laserTotal) {
 				if (laserDelay == 0) {
 					calculateMovement(&laser[laserCount].deltaX, &laser[laserCount].deltaY, playerShip.rotate, 10);
-					laser[laserCount].laser_dstrect.x = playerShip.dstrect.x + 8;
-					laser[laserCount].laser_dstrect.y = playerShip.dstrect.y - 2;
-					laser[laserCount].laser_rotate = playerShip.rotate;
+					laser[laserCount].dstrect.x = playerShip.dstrect.x + 8;
+					laser[laserCount].dstrect.y = playerShip.dstrect.y - 2;
+					laser[laserCount].rotate = playerShip.rotate;
 
 					Mix_PlayChannel(-1, playerShip.shootSFX, 0);
 					
@@ -716,8 +676,8 @@ int initializeAstroshark(int *debug) {
 		/*Tests for collision between asteroid and laser beam*/
 		for (i = 0; i < asteroidDefault; i++) {
 			for (j = 0; j < laserTotal; j++) {
-				if (laser[j].laser_dstrect.x + laser[j].laser_dstrect.w < WINDOW_WIDTH && laser[j].laser_dstrect.x  > 0 && laser[j].laser_dstrect.y + laser[j].laser_dstrect.h < WINDOW_HEIGHT && laser[j].laser_dstrect.y > 0) {
-					if ((laser[j].laser_dstrect.y >= asteroid[i].asteroid_dstrect.y && laser[j].laser_dstrect.y <= asteroid[i].asteroid_dstrect.y + asteroid[i].asteroid_dstrect.h) && (laser[j].laser_dstrect.x <= asteroid[i].asteroid_dstrect.x + asteroid[i].asteroid_dstrect.w && laser[j].laser_dstrect.x > asteroid[i].asteroid_dstrect.x)) {
+				if (laser[j].dstrect.x + laser[j].dstrect.w < WINDOW_WIDTH && laser[j].dstrect.x  > 0 && laser[j].dstrect.y + laser[j].dstrect.h < WINDOW_HEIGHT && laser[j].dstrect.y > 0) {
+					if ((laser[j].dstrect.y >= asteroid[i].asteroid_dstrect.y && laser[j].dstrect.y <= asteroid[i].asteroid_dstrect.y + asteroid[i].asteroid_dstrect.h) && (laser[j].dstrect.x <= asteroid[i].asteroid_dstrect.x + asteroid[i].asteroid_dstrect.w && laser[j].dstrect.x > asteroid[i].asteroid_dstrect.x)) {
 						asteroid[i].health--;
 						//printf("Veritcal Hit Size: %d  Health: %d\n", asteroid[i].size, asteroid[i].health);
 						if (asteroid[i].health == 0) {
@@ -727,10 +687,10 @@ int initializeAstroshark(int *debug) {
 							playerScore++;
 							printf("Score: %d\n", playerScore);
 						}
-						//laser[j].laser_dstrect.x = -50;
-						//laser[j].laser_dstrect.y = 0;
+						//laser[j].dstrect.x = -50;
+						//laser[j].dstrect.y = 0;
 					}
-					if ((laser[j].laser_dstrect.x >= asteroid[i].asteroid_dstrect.x && laser[j].laser_dstrect.x <= asteroid[i].asteroid_dstrect.x + asteroid[i].asteroid_dstrect.w) && (laser[j].laser_dstrect.y <= asteroid[i].asteroid_dstrect.y + asteroid[i].asteroid_dstrect.h && laser[j].laser_dstrect.y > asteroid[i].asteroid_dstrect.y)) {
+					if ((laser[j].dstrect.x >= asteroid[i].asteroid_dstrect.x && laser[j].dstrect.x <= asteroid[i].asteroid_dstrect.x + asteroid[i].asteroid_dstrect.w) && (laser[j].dstrect.y <= asteroid[i].asteroid_dstrect.y + asteroid[i].asteroid_dstrect.h && laser[j].dstrect.y > asteroid[i].asteroid_dstrect.y)) {
 						asteroid[i].health--;	
 						//printf("Horizontal Hit Size: %d  Health %d\n", asteroid[i].size, asteroid[i].health);
 						if (asteroid[i].health == 0) {
@@ -775,15 +735,15 @@ int initializeAstroshark(int *debug) {
 			SDL_RenderCopyEx(renderer, asteroidTexture, &asteroid[i].asteroid_srcrect, &asteroid[i].asteroid_dstrect, asteroid[i].rotate, NULL, SDL_FLIP_NONE);
 		}
 		for (i = 0; i < laserTotal; i++) {
-			if (laser[i].laser_dstrect.x + laser[i].laser_dstrect.h < 0 || laser[i].laser_dstrect.x + laser[i].laser_dstrect.h > WINDOW_WIDTH || laser[i].laser_dstrect.y + laser[i].laser_dstrect.h < 0 || laser[i].laser_dstrect.y + laser[i].laser_dstrect.h > WINDOW_HEIGHT) {
+			if (laser[i].dstrect.x + laser[i].dstrect.h < 0 || laser[i].dstrect.x + laser[i].dstrect.h > WINDOW_WIDTH || laser[i].dstrect.y + laser[i].dstrect.h < 0 || laser[i].dstrect.y + laser[i].dstrect.h > WINDOW_HEIGHT) {
 				if (laserCount == 20) {
 					laserCount = 0;
 				}
 			}
-			laser[i].laser_dstrect.x += laser[i].deltaX;
-			laser[i].laser_dstrect.y += laser[i].deltaY;
-			SDL_RenderCopyEx(renderer, laserTexture, &laser[i].laser_srcrect, &laser[i].laser_dstrect, -1 * (laser[i].laser_rotate - playerShip.defaultOrientation), &laser_origin, SDL_FLIP_NONE);
-//			printf("%d\tW:%d\tH:%d\n", i, laser[i].laser_dstrect.w, laser[i].laser_dstrect.h);
+			laser[i].dstrect.x += laser[i].deltaX;
+			laser[i].dstrect.y += laser[i].deltaY;
+			SDL_RenderCopyEx(renderer, laserTexture, &laser[i].srcrect, &laser[i].dstrect, -1 * (laser[i].rotate - playerShip.defaultOrientation), &laser_origin, SDL_FLIP_NONE);
+//			printf("%d\tW:%d\tH:%d\n", i, laser[i].dstrect.w, laser[i].dstrect.h);
 
 		}/*Copies the texture onto the rect, and rotates it correctly*/
 			/*Presents the renderer and draws everything in renderer*/
@@ -799,7 +759,7 @@ int initializeAstroshark(int *debug) {
 	SDL_DestroyTexture(playerShip.texture);
 	SDL_DestroyTexture(laserTexture);
 	SDL_DestroyTexture(asteroidTexture);
-	SDL_DestroyTexture(titleTexture);
+	SDL_DestroyTexture(splash_screenTexture);
 	SDL_DestroyTexture(endTexture);
 	/*Destroys Renderer*/
 	SDL_DestroyRenderer(renderer);
