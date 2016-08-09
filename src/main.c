@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.6.0*/
+/*Astroshark v0.6.1*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +16,7 @@
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.6.0"};
+char windowTitle[18] = {"Astroshark  v0.6.1"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -216,8 +216,6 @@ int initializeAstroshark(int *debug) {
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, splash_screenTexture, NULL, &splash_screenRect);
 	SDL_RenderPresent(renderer);
-
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
 	/*Creates End texture*/
 	SDL_Texture *endTexture;
@@ -503,10 +501,21 @@ int initializeAstroshark(int *debug) {
 /*	for (i = 0; i < laserTotal; i++) {
 		printf("Laser %d W: %d H: %d\n", i, laser[i].dstrect.w, laser[i].dstrect.h);
 	}*/
-
-/*close requested variable for controlling closed window*/
+	/*close requested variable for controlling closed window*/
 	/*Test for various events from the keyboard*/
-	int close_requested = 0;																						
+	int close_requested = 0;
+	
+	int backgroundColor = 255;
+	while (backgroundColor > 0) {
+		SDL_SetRenderDrawColor(renderer, backgroundColor, backgroundColor, backgroundColor, 255);
+		SDL_RenderClear(renderer);
+		SDL_RenderCopy(renderer, splash_screenTexture, NULL, &splash_screenRect);
+		SDL_SetTextureAlphaMod(splash_screenTexture, backgroundColor);
+		SDL_RenderPresent(renderer);
+		backgroundColor -= 5;
+	}
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	
 	while (!close_requested) {																						
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
