@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.6.2*/
+/*Astroshark v0.6.3*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,14 +10,14 @@
 #include "SDL_mixer.h"
 #include "asteroids.h"
 #include "lasers.h"
-#include "background.h"
+#include "backend.h"
 
 #define PI 3.14159265
 
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.6.2"};
+char windowTitle[18] = {"Astroshark  v0.6.3"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -129,43 +129,6 @@ void calculateMovement(int *deltaX, int *deltaY, int angle, int speed) {
 		}
 	}
 }
-/*Function to create laser, takes in points because those values have to be used in the game(Double pointers are for pointers to struct pointers)*/
-/*Creates a temporary surface and loads the spritesheet*/
-/*Sets the texture to the spritesheet on the tempSurface*/
-/*Frees the space allocated to the tempSurface*/
-/*Sets the width and height of the dstrect to the sprite's texture, essentially binding the texture to the dstrect*/
-void createAsteroid(struct SDL_Window **gameWindow, struct SDL_Renderer **renderer, int *w, int *h, struct SDL_Texture **spriteTexture) {  	
-	SDL_Surface *tempSurface = IMG_Load("resources/gfx/asteroid_spritesheet_640x640.png");
-	*spriteTexture = SDL_CreateTextureFromSurface(*renderer, tempSurface);
-	SDL_FreeSurface(tempSurface);
-	SDL_QueryTexture(*spriteTexture, NULL, NULL, w, h);
-}
-
-/*Function to create laser, takes in points because those values have to be used in the game(Double pointers are for pointers to struct pointers)*/
-/*Creates a temporary surface and loads the spritesheet*/
-/*Sets the texture to the spritesheet on the tempSurface*/
-/*Frees the space allocated to the tempSurface*/
-/*Sets the width and height of the dstrect to the sprite's texture, essentially binding the texture to the dstrect*/
-void createLaser(struct SDL_Window **gameWindow, struct SDL_Renderer **renderer, int *w, int *h, struct SDL_Texture **spriteTexture) {  	
-	SDL_Surface *tempSurface = IMG_Load("resources/gfx/lasers_spritesheet_160x320.png");
-	*spriteTexture = SDL_CreateTextureFromSurface(*renderer, tempSurface);
-	SDL_FreeSurface(tempSurface);
-	SDL_QueryTexture(*spriteTexture, NULL, NULL, w, h);
-}
-
-
-/*Function to create ship, takes in points because those values have to be used in the game(Double pointers are for pointers to struct pointers)*/
-/*Creates a temporary surface and loads the spritesheet*/
-/*Sets the texture to the spritesheet on the tempSurface*/
-/*Frees the space allocated to the tempSurface*/
-/*Sets the width and height of the dstrect to the sprite's texture, essentially binding the texture to the dstrect*/
-void createShip(struct SDL_Window **gameWindow, struct SDL_Renderer **renderer, int *w, int *h, struct SDL_Texture **spriteTexture) {  
-	SDL_Surface *tempSurface = IMG_Load("resources/gfx/playerShip_spritesheet_320x480.png");
-	*spriteTexture = SDL_CreateTextureFromSurface(*renderer, tempSurface);
-	SDL_FreeSurface(tempSurface);
-	SDL_QueryTexture(*spriteTexture, NULL, NULL, w, h);
-}
-
 
 /*Function for initalizing Astroshark*/
 int initializeAstroshark(int *debug) {
@@ -205,10 +168,7 @@ int initializeAstroshark(int *debug) {
 	/*Creates Loading Screen*/
 	SDL_Texture *splash_screenTexture;
 	SDL_Rect splash_screenRect;
-	SDL_Surface *tempSurface = IMG_Load("resources/gfx/splash_screen.png");
-	splash_screenTexture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-	SDL_FreeSurface(tempSurface);
-	SDL_QueryTexture(splash_screenTexture, NULL, NULL, &splash_screenRect.w, &splash_screenRect.h);
+	createSprite(&gameWindow, &renderer, &splash_screenRect.w, &splash_screenRect.h, &splash_screenTexture, "resources/gfx/splash_screen.png");
 	splash_screenRect.w *= 1;
 	splash_screenRect.h *= 1;
 	splash_screenRect.x = (WINDOW_WIDTH / 2) - (splash_screenRect.w / 2);
@@ -234,7 +194,7 @@ int initializeAstroshark(int *debug) {
 	SDL_Texture *backgroundTexture;
 
 	SDL_Rect backgroundRect;
-	createBackground(&gameWindow, &renderer, &backgroundRect.w, &backgroundRect.h, &backgroundTexture);
+	createSprite(&gameWindow, &renderer, &backgroundRect.w, &backgroundRect.h, &backgroundTexture, "resources/gfx/background_1920x1920.png");
 	backgroundRect.x = 0 - ((backgroundRect.w / 2) - (WINDOW_WIDTH / 2));
 	backgroundRect.y = 0 - ((backgroundRect.h / 2) - (WINDOW_HEIGHT / 2));
 
@@ -244,7 +204,7 @@ int initializeAstroshark(int *debug) {
 /*Creates the Ship's texture*/
 /*Sends the addresses the necessary structs and data to createShip()*/
 	shipInstance playerShip;
-	createShip(&gameWindow, &renderer, &playerShip.dstrect.w, &playerShip.dstrect.h, &playerShip.texture);
+	createSprite(&gameWindow, &renderer, &playerShip.dstrect.w, &playerShip.dstrect.h, &playerShip.texture, "resources/gfx/playerShip_spritesheet_320x480.png");
 /*Resizes the width of the rectangle to the size of a single sprite*/
 	/*Scales down the ship*/
 	playerShip.dstrect.w -= 1600;
@@ -261,7 +221,7 @@ int initializeAstroshark(int *debug) {
 	playerShip.srcrect.h = 480;
 
 /*Default ship speed*/
-	playerShip.speed = 5;
+	playerShip.speed = 4;
 
 /*Various booleans for different movements*/
 	playerShip.moveForward = 0;
@@ -297,7 +257,7 @@ int initializeAstroshark(int *debug) {
 	SDL_Texture *laserTexture;
 	laserInstance laser[20];
 	for (i = 0; i < laserTotal; i++) {
-		createLaser(&gameWindow, &renderer, &laser[i].dstrect.w, &laser[i].dstrect.h, &laserTexture);
+		createSprite(&gameWindow, &renderer, &laser[i].dstrect.w, &laser[i].dstrect.h, &laserTexture, "resources/gfx/lasers_spritesheet_160x320.png");
 		laser[i].dstrect.w -= 320;
 		laser[i].dstrect.w /= 10;
 		laser[i].dstrect.h /= 10;	
@@ -331,7 +291,7 @@ int initializeAstroshark(int *debug) {
 	SDL_Texture *asteroidTexture;
 	asteroidInstance asteroid[20];
 	for (i = 0; i < asteroidDefault; i++) {
-		createAsteroid(&gameWindow, &renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture);
+		createSprite(&gameWindow, &renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture, "resources/gfx/asteroid_spritesheet_640x640.png");
 		asteroid[i].asteroid_dstrect.w -= 640;
 		asteroid[i].asteroid_dstrect.h -= 1920;
 		asteroid[i].asteroid_dstrect.w /= (rand() % 30) + 5;
@@ -616,29 +576,29 @@ int initializeAstroshark(int *debug) {
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
 			playerShip.animationFrame++;
-			backgroundRect.x -= playerShip.deltaX / 2;
-			backgroundRect.y -= playerShip.deltaY / 2;
+			backgroundRect.x -= playerShip.deltaX / 3;
+			backgroundRect.y -= playerShip.deltaY / 3;
 		}
 		if (playerShip.moveBackward == 1) {
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, -1 * playerShip.speed + 3);
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, -1 * playerShip.speed + 2);
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
-			backgroundRect.x -= playerShip.deltaX / 2;
-			backgroundRect.y -= playerShip.deltaY / 2;
+			backgroundRect.x -= playerShip.deltaX / 3;
+			backgroundRect.y -= playerShip.deltaY / 3;
 		}
 		if (playerShip.strafeLeft == 1) {
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate - 90, playerShip.speed - 3);
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate - 90, -1 * playerShip.speed + 2);
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
-			backgroundRect.x -= playerShip.deltaX / 2;
-			backgroundRect.y -= playerShip.deltaY / 2;
+			backgroundRect.x -= playerShip.deltaX / 3;
+			backgroundRect.y -= playerShip.deltaY / 3;
 		}
 		if (playerShip.strafeRight == 1) {
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate + 90, playerShip.speed - 3);
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate + 90, -1 * playerShip.speed + 2);
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
-			backgroundRect.x -= playerShip.deltaX / 2;
-			backgroundRect.y -= playerShip.deltaY / 2;
+			backgroundRect.x -= playerShip.deltaX / 3;
+			backgroundRect.y -= playerShip.deltaY / 3;
 		}
 
 		if (playerShip.actionShoot == 1) {
