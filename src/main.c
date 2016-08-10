@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.6.3*/
+/*Astroshark v0.6.4*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.6.3"};
+char windowTitle[18] = {"Astroshark  v0.6.4"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -192,11 +192,16 @@ int initializeAstroshark(int *debug) {
 	endRect.h = WINDOW_HEIGHT;
 
 	SDL_Texture *backgroundTexture;
-
 	SDL_Rect backgroundRect;
 	createSprite(&gameWindow, &renderer, &backgroundRect.w, &backgroundRect.h, &backgroundTexture, "resources/gfx/background_1920x1920.png");
 	backgroundRect.x = 0 - ((backgroundRect.w / 2) - (WINDOW_WIDTH / 2));
 	backgroundRect.y = 0 - ((backgroundRect.h / 2) - (WINDOW_HEIGHT / 2));
+
+	SDL_Texture *hudTexture;
+	SDL_Rect hudRect;
+	createSprite(&gameWindow, &renderer, &hudRect.w, &hudRect.h, &hudTexture, "resources/gfx/hud.png");
+	hudRect.x = 0;
+	hudRect.y = 0;
 
 	
 	/*Creates ship's destination rectangle, a.k.a. the ship "object"*/
@@ -483,6 +488,8 @@ int initializeAstroshark(int *debug) {
 		backgroundColor -= 5;
 	}
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+	int hudAlpha = 0;
 	
 	while (!close_requested) {																						
 		SDL_Event event;
@@ -700,6 +707,10 @@ int initializeAstroshark(int *debug) {
 				playerShip.lives--;
 			}
 		}
+		if (hudAlpha < 255) {
+			SDL_SetTextureAlphaMod(hudTexture, hudAlpha);
+			hudAlpha += 5;
+		}
 
 
 /*Renders and updates position based on the different changes in X and Y*/
@@ -733,6 +744,8 @@ int initializeAstroshark(int *debug) {
 		}/*Copies the texture onto the rect, and rotates it correctly*/
 			/*Presents the renderer and draws everything in renderer*/
 		SDL_RenderCopyEx(renderer, playerShip.texture, &playerShip.srcrect, &playerShip.dstrect, -1 * (playerShip.rotate - playerShip.defaultOrientation), NULL, SDL_FLIP_NONE);
+
+		SDL_RenderCopy(renderer, hudTexture, NULL, &hudRect);
 		SDL_RenderPresent(renderer);
 
 		SDL_Delay(1000/60);
@@ -747,6 +760,7 @@ int initializeAstroshark(int *debug) {
 	SDL_DestroyTexture(splash_screenTexture);
 	SDL_DestroyTexture(endTexture);
 	SDL_DestroyTexture(backgroundTexture);
+	SDL_DestroyTexture(hudTexture);
 	/*Destroys Renderer*/
 	SDL_DestroyRenderer(renderer);
 	/*Destroys the window that gameWindow is pointing to*/
