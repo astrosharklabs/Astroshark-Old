@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.6.4*/
+/*Astroshark v0.6.5*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.6.4"};
+char windowTitle[18] = {"Astroshark  v0.6.5"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -112,18 +112,18 @@ void calculateMovement(int *deltaX, int *deltaY, int angle, int speed) {
 				break;
 			case NORTH:
 				*deltaX = 0;
-				*deltaY = -1 * speed;
+				*deltaY = -1 * sinT + 1;
 				break;
 			case EAST:
-				*deltaX = speed;
+				*deltaX = cosT - 1;
 				*deltaY = 0;
 				break;
 			case SOUTH:
 				*deltaX = 0;
-				*deltaY = speed;
+				*deltaY = -1 * sinT - 1;
 				break;
 			case WEST:
-				*deltaX = -1 * speed;
+				*deltaX = cosT + 1;
 				*deltaY = 0;
 				break;
 		}
@@ -583,29 +583,29 @@ int initializeAstroshark(int *debug) {
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
 			playerShip.animationFrame++;
-			backgroundRect.x -= playerShip.deltaX / 3;
-			backgroundRect.y -= playerShip.deltaY / 3;
+			backgroundRect.x -= playerShip.deltaX / 2;
+			backgroundRect.y -= playerShip.deltaY / 2;
 		}
 		if (playerShip.moveBackward == 1) {
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, -1 * playerShip.speed + 2);
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate + 180, playerShip.speed - 2);
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
-			backgroundRect.x -= playerShip.deltaX / 3;
-			backgroundRect.y -= playerShip.deltaY / 3;
+			backgroundRect.x -= playerShip.deltaX;
+			backgroundRect.y -= playerShip.deltaY;
 		}
 		if (playerShip.strafeLeft == 1) {
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate - 90, -1 * playerShip.speed + 2);
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate + 90, playerShip.speed - 2);
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
-			backgroundRect.x -= playerShip.deltaX / 3;
-			backgroundRect.y -= playerShip.deltaY / 3;
+			backgroundRect.x -= playerShip.deltaX;
+			backgroundRect.y -= playerShip.deltaY;
 		}
 		if (playerShip.strafeRight == 1) {
-			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate + 90, -1 * playerShip.speed + 2);
+			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate - 90, playerShip.speed - 2);
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
-			backgroundRect.x -= playerShip.deltaX / 3;
-			backgroundRect.y -= playerShip.deltaY / 3;
+			backgroundRect.x -= playerShip.deltaX;
+			backgroundRect.y -= playerShip.deltaY;
 		}
 
 		if (playerShip.actionShoot == 1) {
