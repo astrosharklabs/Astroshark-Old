@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.6.1*/
+/*Astroshark v0.6.2*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,13 +10,14 @@
 #include "SDL_mixer.h"
 #include "asteroids.h"
 #include "lasers.h"
+#include "background.h"
 
 #define PI 3.14159265
 
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.6.1"};
+char windowTitle[18] = {"Astroshark  v0.6.2"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -211,7 +212,7 @@ int initializeAstroshark(int *debug) {
 	splash_screenRect.w *= 1;
 	splash_screenRect.h *= 1;
 	splash_screenRect.x = (WINDOW_WIDTH / 2) - (splash_screenRect.w / 2);
-	splash_screenRect.y = (WINDOW_HEIGHT / 2) - (splash_screenRect.h / 2);
+	splash_screenRect.y = (WINDOW_HEIGHT / 2) - (splash_screenRect.h / 2) - 25;
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, splash_screenTexture, NULL, &splash_screenRect);
@@ -229,6 +230,13 @@ int initializeAstroshark(int *debug) {
 	endRect.y = 0;
 	endRect.w = WINDOW_WIDTH;
 	endRect.h = WINDOW_HEIGHT;
+
+	SDL_Texture *backgroundTexture;
+
+	SDL_Rect backgroundRect;
+	createBackground(&gameWindow, &renderer, &backgroundRect.w, &backgroundRect.h, &backgroundTexture);
+	backgroundRect.x = 0 - ((backgroundRect.w / 2) - (WINDOW_WIDTH / 2));
+	backgroundRect.y = 0 - ((backgroundRect.h / 2) - (WINDOW_HEIGHT / 2));
 
 	
 	/*Creates ship's destination rectangle, a.k.a. the ship "object"*/
@@ -608,22 +616,29 @@ int initializeAstroshark(int *debug) {
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
 			playerShip.animationFrame++;
-			
+			backgroundRect.x -= playerShip.deltaX / 2;
+			backgroundRect.y -= playerShip.deltaY / 2;
 		}
 		if (playerShip.moveBackward == 1) {
 			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate, -1 * playerShip.speed + 3);
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
+			backgroundRect.x -= playerShip.deltaX / 2;
+			backgroundRect.y -= playerShip.deltaY / 2;
 		}
 		if (playerShip.strafeLeft == 1) {
 			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate - 90, playerShip.speed - 3);
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
+			backgroundRect.x -= playerShip.deltaX / 2;
+			backgroundRect.y -= playerShip.deltaY / 2;
 		}
 		if (playerShip.strafeRight == 1) {
 			calculateMovement(&playerShip.deltaX, &playerShip.deltaY, playerShip.rotate + 90, playerShip.speed - 3);
 			playerShip.dstrect.x += playerShip.deltaX;
 			playerShip.dstrect.y += playerShip.deltaY;
+			backgroundRect.x -= playerShip.deltaX / 2;
+			backgroundRect.y -= playerShip.deltaY / 2;
 		}
 
 		if (playerShip.actionShoot == 1) {
@@ -729,6 +744,7 @@ int initializeAstroshark(int *debug) {
 
 /*Renders and updates position based on the different changes in X and Y*/
 		SDL_RenderClear(renderer);
+		SDL_RenderCopy(renderer, backgroundTexture, NULL, &backgroundRect);
 		for (i = 0; i < asteroidDefault; i++) {
 			asteroid[i].asteroid_dstrect.x += asteroid[i].deltaX;
 			asteroid[i].asteroid_dstrect.y += asteroid[i].deltaY;
@@ -770,6 +786,7 @@ int initializeAstroshark(int *debug) {
 	SDL_DestroyTexture(asteroidTexture);
 	SDL_DestroyTexture(splash_screenTexture);
 	SDL_DestroyTexture(endTexture);
+	SDL_DestroyTexture(backgroundTexture);
 	/*Destroys Renderer*/
 	SDL_DestroyRenderer(renderer);
 	/*Destroys the window that gameWindow is pointing to*/
