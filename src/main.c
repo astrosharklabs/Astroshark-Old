@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.6.6*/
+/*Astroshark v0.6.7*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.6.6"};
+char windowTitle[18] = {"Astroshark  v0.6.7"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -172,10 +172,8 @@ int initializeAstroshark(int *debug) {
 	SDL_Texture *splash_screenTexture;
 	SDL_Rect splash_screenRect;
 	createSprite(&renderer, &splash_screenRect.w, &splash_screenRect.h, &splash_screenTexture, "resources/gfx/splash_screen.png");
-	splash_screenRect.w *= 1;
-	splash_screenRect.h *= 1;
-	splash_screenRect.x = (WINDOW_WIDTH / 2) - (splash_screenRect.w / 2);
-	splash_screenRect.y = (WINDOW_HEIGHT / 2) - (splash_screenRect.h / 2) - 25;
+	splash_screenRect.x = 0;
+	splash_screenRect.y = 0;
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, splash_screenTexture, NULL, &splash_screenRect);
@@ -480,17 +478,16 @@ int initializeAstroshark(int *debug) {
 	/*close requested variable for controlling closed window*/
 	/*Test for various events from the keyboard*/
 	int close_requested = 0;
-	
-	int backgroundColor = 255;
-	while (backgroundColor > 0) {
-		SDL_SetRenderDrawColor(renderer, backgroundColor, backgroundColor, backgroundColor, 255);
+
+	int splash_screenAlpha = 255;
+	while (splash_screenAlpha > 0) {
 		SDL_RenderClear(renderer);
+		SDL_RenderCopy(renderer, backgroundTexture, NULL, &backgroundRect);
 		SDL_RenderCopy(renderer, splash_screenTexture, NULL, &splash_screenRect);
-		SDL_SetTextureAlphaMod(splash_screenTexture, backgroundColor);
+		SDL_SetTextureAlphaMod(splash_screenTexture, splash_screenAlpha);
 		SDL_RenderPresent(renderer);
-		backgroundColor -= 5;
+		splash_screenAlpha -= 5;
 	}
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 
 	int hudAlpha = 0;
 	
@@ -778,7 +775,7 @@ int initializeAstroshark(int *debug) {
 	*debug = 0;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 	/*Variable for testing if initialization was successful*/
 	int debug;
 	initializeAstroshark(&debug);
