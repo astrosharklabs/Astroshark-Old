@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.6.5*/
+/*Astroshark v0.6.6*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,13 +17,13 @@
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.6.5"};
+char windowTitle[18] = {"Astroshark  v0.6.6"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
 enum shipAnimation {AT_REST, ENGINE_START, ENGINE_1, ENGINE_2, ENGINE_3, ENGINE_4};
 /*Strut for a ship*/
-typedef struct shipCharacter{
+typedef struct shipCharacter {
 	SDL_Rect dstrect;
 	SDL_Rect srcrect;
 	SDL_Texture *texture;
@@ -132,12 +132,15 @@ void calculateMovement(int *deltaX, int *deltaY, int angle, int speed) {
 
 /*Function for initalizing Astroshark*/
 int initializeAstroshark(int *debug) {
+
+	printf("Initialized Astroshark\n\n%s", windowTitle);
+
 	int i; //Standard Counter
 	int j; //Secondary Counter
 	int playerScore = 0;
 	srand(time(NULL));
 /*Initalizes SDL while testing if it was successful*/
-	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_AUDIO) !=0) {
+	if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_AUDIO) != 0) {
 		printf("\n\n***ERROR: Unable to initalize SDL: %s\nEND ERROR***\n", SDL_GetError());
 		*debug = 1;
 		return 1;
@@ -168,7 +171,7 @@ int initializeAstroshark(int *debug) {
 	/*Creates Loading Screen*/
 	SDL_Texture *splash_screenTexture;
 	SDL_Rect splash_screenRect;
-	createSprite(&gameWindow, &renderer, &splash_screenRect.w, &splash_screenRect.h, &splash_screenTexture, "resources/gfx/splash_screen.png");
+	createSprite(&renderer, &splash_screenRect.w, &splash_screenRect.h, &splash_screenTexture, "resources/gfx/splash_screen.png");
 	splash_screenRect.w *= 1;
 	splash_screenRect.h *= 1;
 	splash_screenRect.x = (WINDOW_WIDTH / 2) - (splash_screenRect.w / 2);
@@ -193,13 +196,13 @@ int initializeAstroshark(int *debug) {
 
 	SDL_Texture *backgroundTexture;
 	SDL_Rect backgroundRect;
-	createSprite(&gameWindow, &renderer, &backgroundRect.w, &backgroundRect.h, &backgroundTexture, "resources/gfx/background_1920x1920.png");
+	createSprite(&renderer, &backgroundRect.w, &backgroundRect.h, &backgroundTexture, "resources/gfx/background_1920x1920.png");
 	backgroundRect.x = 0 - ((backgroundRect.w / 2) - (WINDOW_WIDTH / 2));
 	backgroundRect.y = 0 - ((backgroundRect.h / 2) - (WINDOW_HEIGHT / 2));
 
 	SDL_Texture *hudTexture;
 	SDL_Rect hudRect;
-	createSprite(&gameWindow, &renderer, &hudRect.w, &hudRect.h, &hudTexture, "resources/gfx/hud.png");
+	createSprite(&renderer, &hudRect.w, &hudRect.h, &hudTexture, "resources/gfx/hud.png");
 	hudRect.x = 0;
 	hudRect.y = 0;
 
@@ -209,7 +212,7 @@ int initializeAstroshark(int *debug) {
 /*Creates the Ship's texture*/
 /*Sends the addresses the necessary structs and data to createShip()*/
 	shipInstance playerShip;
-	createSprite(&gameWindow, &renderer, &playerShip.dstrect.w, &playerShip.dstrect.h, &playerShip.texture, "resources/gfx/playerShip_spritesheet_320x480.png");
+	createSprite(&renderer, &playerShip.dstrect.w, &playerShip.dstrect.h, &playerShip.texture, "resources/gfx/playerShip_spritesheet_320x480.png");
 /*Resizes the width of the rectangle to the size of a single sprite*/
 	/*Scales down the ship*/
 	playerShip.dstrect.w -= 1600;
@@ -262,7 +265,7 @@ int initializeAstroshark(int *debug) {
 	SDL_Texture *laserTexture;
 	laserInstance laser[20];
 	for (i = 0; i < laserTotal; i++) {
-		createSprite(&gameWindow, &renderer, &laser[i].dstrect.w, &laser[i].dstrect.h, &laserTexture, "resources/gfx/lasers_spritesheet_160x320.png");
+		createSprite(&renderer, &laser[i].dstrect.w, &laser[i].dstrect.h, &laserTexture, "resources/gfx/lasers_spritesheet_160x320.png");
 		laser[i].dstrect.w -= 320;
 		laser[i].dstrect.w /= 10;
 		laser[i].dstrect.h /= 10;	
@@ -296,7 +299,7 @@ int initializeAstroshark(int *debug) {
 	SDL_Texture *asteroidTexture;
 	asteroidInstance asteroid[20];
 	for (i = 0; i < asteroidDefault; i++) {
-		createSprite(&gameWindow, &renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture, "resources/gfx/asteroid_spritesheet_640x640.png");
+		createSprite(&renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture, "resources/gfx/asteroid_spritesheet_640x640.png");
 		asteroid[i].asteroid_dstrect.w -= 640;
 		asteroid[i].asteroid_dstrect.h -= 1920;
 		asteroid[i].asteroid_dstrect.w /= (rand() % 30) + 5;
