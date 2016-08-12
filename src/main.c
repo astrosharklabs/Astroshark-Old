@@ -1,5 +1,5 @@
 /*Sean Kee*/
-/*Astroshark v0.6.7*/
+/*Astroshark v0.6.8*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@
 #define WINDOW_HEIGHT 720
 #define WINDOW_WIDTH 1280
 /*Title of the window*/
-char windowTitle[18] = {"Astroshark  v0.6.7"};
+char windowTitle[18] = {"Astroshark  v0.6.8"};
 
 enum direction {NORTH = 5, EAST, SOUTH, WEST};
 enum location {TOP = 0, RIGHT, BOTTOM, LEFT};
@@ -171,7 +171,7 @@ int initializeAstroshark(int *debug) {
 	/*Creates Loading Screen*/
 	SDL_Texture *splash_screenTexture;
 	SDL_Rect splash_screenRect;
-	createSprite(&renderer, &splash_screenRect.w, &splash_screenRect.h, &splash_screenTexture, "resources/gfx/splash_screen.png");
+	createSprite(renderer, &splash_screenRect.w, &splash_screenRect.h, &splash_screenTexture, "resources/gfx/splash_screen.png");
 	splash_screenRect.x = 0;
 	splash_screenRect.y = 0;
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -194,13 +194,13 @@ int initializeAstroshark(int *debug) {
 
 	SDL_Texture *backgroundTexture;
 	SDL_Rect backgroundRect;
-	createSprite(&renderer, &backgroundRect.w, &backgroundRect.h, &backgroundTexture, "resources/gfx/background_1920x1920.png");
+	createSprite(renderer, &backgroundRect.w, &backgroundRect.h, &backgroundTexture, "resources/gfx/background_1920x1920.png");
 	backgroundRect.x = 0 - ((backgroundRect.w / 2) - (WINDOW_WIDTH / 2));
 	backgroundRect.y = 0 - ((backgroundRect.h / 2) - (WINDOW_HEIGHT / 2));
 
 	SDL_Texture *hudTexture;
 	SDL_Rect hudRect;
-	createSprite(&renderer, &hudRect.w, &hudRect.h, &hudTexture, "resources/gfx/hud.png");
+	createSprite(renderer, &hudRect.w, &hudRect.h, &hudTexture, "resources/gfx/hud.png");
 	hudRect.x = 0;
 	hudRect.y = 0;
 
@@ -210,7 +210,7 @@ int initializeAstroshark(int *debug) {
 /*Creates the Ship's texture*/
 /*Sends the addresses the necessary structs and data to createShip()*/
 	shipInstance playerShip;
-	createSprite(&renderer, &playerShip.dstrect.w, &playerShip.dstrect.h, &playerShip.texture, "resources/gfx/playerShip_spritesheet_320x480.png");
+	createSprite(renderer, &playerShip.dstrect.w, &playerShip.dstrect.h, &playerShip.texture, "resources/gfx/playerShip_spritesheet_320x480.png");
 /*Resizes the width of the rectangle to the size of a single sprite*/
 	/*Scales down the ship*/
 	playerShip.dstrect.w -= 1600;
@@ -263,7 +263,7 @@ int initializeAstroshark(int *debug) {
 	SDL_Texture *laserTexture;
 	laserInstance laser[20];
 	for (i = 0; i < laserTotal; i++) {
-		createSprite(&renderer, &laser[i].dstrect.w, &laser[i].dstrect.h, &laserTexture, "resources/gfx/lasers_spritesheet_160x320.png");
+		createSprite(renderer, &laser[i].dstrect.w, &laser[i].dstrect.h, &laserTexture, "resources/gfx/lasers_spritesheet_160x320.png");
 		laser[i].dstrect.w -= 320;
 		laser[i].dstrect.w /= 10;
 		laser[i].dstrect.h /= 10;	
@@ -297,7 +297,7 @@ int initializeAstroshark(int *debug) {
 	SDL_Texture *asteroidTexture;
 	asteroidInstance asteroid[20];
 	for (i = 0; i < asteroidDefault; i++) {
-		createSprite(&renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture, "resources/gfx/asteroid_spritesheet_640x640.png");
+		createSprite(renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture, "resources/gfx/asteroid_spritesheet_640x640.png");
 		asteroid[i].asteroid_dstrect.w -= 640;
 		asteroid[i].asteroid_dstrect.h -= 1920;
 		asteroid[i].asteroid_dstrect.w /= (rand() % 30) + 5;
@@ -378,7 +378,7 @@ int initializeAstroshark(int *debug) {
 	}*/
 
 /*	for (i = (asteroidTotal - asteroidDouble); i < (asteroidTotal - asteroidGold); i++) {
-		createAsteroid(&gameWindow, &renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture);
+		createAsteroid(&gameWindow, renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture);
 		asteroid[i].asteroid_dstrect.w -= 640;
 		asteroid[i].asteroid_dstrect.h -= 1920;
 		asteroid[i].asteroid_dstrect.w /= (rand() % 30) + 30;
@@ -429,7 +429,7 @@ int initializeAstroshark(int *debug) {
 	}*/
 
 /*	for (i = (asteroidTotal - asteroidGold); i < asteroidTotal; i++) {
-		createAsteroid(&gameWindow, &renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture);
+		createAsteroid(&gameWindow, renderer, &asteroid[i].asteroid_dstrect.w, &asteroid[i].asteroid_dstrect.h, &asteroidTexture);
 		asteroid[i].asteroid_dstrect.w -= 640;
 		asteroid[i].asteroid_dstrect.h -= 1920;
 		asteroid[i].asteroid_dstrect.w /= (rand() % 50) + 10;
